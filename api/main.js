@@ -9,6 +9,14 @@ function verify(key) {
   return keys.includes(key);
 }
 
+function logUsage(key, endpoint) {
+  const fileName = path.join(__dirname, 'usage.log');
+  const entry = `[${new Date().toISOString()}] [${key}] ${endpoint}\n`;
+  fs.appendFile(fileName, entry, (err) => {
+    if (err) console.error(`Error logging endpoint usage:`, err);
+  });
+}
+
 router.use(async (req, res, next) => {
   const apiKey = req.query.key;
   if (!apiKey) {
@@ -21,6 +29,7 @@ router.use(async (req, res, next) => {
       message: "Invalid API key"
     });
   }
+  logUsage(apiKey, req.originalUrl);
   next();
 });
 
