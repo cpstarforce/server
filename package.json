@@ -1,5 +1,5 @@
 {
-  "name": "Star Force Server",
+  "name": "star-force-server",
   "type": "module",
   "dependencies": {
     "express": "^5.1.0"
