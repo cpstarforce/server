@@ -1,8 +1,12 @@
-const express = require('express');
-const fs = require('fs');
+import { fileURLToPath } from 'url';
+import server from '../index.js';
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const router = express.Router();
-const path = require('path');
-const rawKeys = fs.readFileSync(path.join(__dirname, 'keys.json'), 'utf-8');
+const rawKeys = fs.readFileSync(path.join("/etc/secrets", 'api-keys.json'), 'utf-8');
 const keys = JSON.parse(rawKeys);
 
 function verify(key) {
@@ -21,7 +25,7 @@ router.use(async (req, res, next) => {
   const apiKey = req.query.key;
   if (!apiKey) {
     return res.status(403).json({
-      message: "API key not provided in query"
+      message: "Missing API key"
     });
   }
   if (!verify(apiKey)) {
@@ -33,11 +37,13 @@ router.use(async (req, res, next) => {
   next();
 });
 
+console.log("[API] Routers are being created.");
+
 router.get('/ping', (req, res) => {
   const start = req.header("start") || req.query.start || Date.now();
   setImmediate(() => {
     const ping = Date.now() - start;
-    res.json({
+    res.status(200).json({
       message: 'Pong!',
       ping: ping,
       start: start
@@ -46,10 +52,14 @@ router.get('/ping', (req, res) => {
 });
 
 router.get('/status', (req, res) => {
-  res.json({
-    status: 'Online',
-    uptime: process.uptime()
+  res.status(200).json({
+    status: server.status,
+    memoryUsage: (process.memoryUsage().heapUsed / 1000 / 1000).toFixed(2) + ' MB',
+    cpuUsage: (process.cpuUsage().system / 1000).toFixed(2) + '%',
+    uptime: (process.uptime() * 1000).toFixed() + ' ms',
   });
 });
 
-module.exports = router;
+console.log("[API] Routers are set up.");
+
+export default router;
